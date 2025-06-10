@@ -1,66 +1,64 @@
 #include <stdio.h>
 
-// This function recursively finds all subsets of `w[]`
-// that sum to the target value `d`
-void subsetSum(int w[], int x[], int k, int n, int curr_sum, int remaining, int d, int *count) {
-    x[k] = 1;  // We choose to include w[k] in the current subset
+#define MAX 10
 
-    // Check if current sum + w[k] exactly matches the required sum
-    if (curr_sum + w[k] == d) {
-        (*count)++;  // A valid subset found
-        printf("\nSubset %d: ", *count);
-        for (int i = 0; i <= k; i++) {
-            if (x[i] == 1)  // print only included elements
-                printf("%d ", w[i]);
+int set[MAX];            // Array to hold the input set (assumed to be in increasing order)
+int include[MAX];        // Array to keep track of elements included in the current subset
+int targetSum;           // Target sum to find subsets for
+
+// Recursive function to find subsets with the required sum
+void findSubsets(int currentSum, int index, int remainingSum) {
+    int i;
+
+    include[index] = 1;  // Include current element in subset
+
+    // If current sum + set[index] equals the target, print the subset
+    if ((currentSum + set[index]) == targetSum) {
+        for (i = 1; i <= index; i++) {
+            if (include[i] == 1)
+                printf("%d ", set[i]);
         }
         printf("\n");
-    } 
-    // If we can go deeper and still remain within the target sum, explore including the next element
-    else if (k + 1 < n && curr_sum + w[k] + w[k + 1] <= d) {
-        subsetSum(w, x, k + 1, n, curr_sum + w[k], remaining - w[k], d, count);
     }
 
-    // Now explore the possibility of excluding w[k]
-    // We only do this if there's a chance the remaining elements can still form a valid subset
-    if (k + 1 < n && curr_sum + remaining - w[k] >= d && curr_sum + w[k] <= d) {
-        x[k] = 0;  // Backtrack: mark w[k] as not included
-        subsetSum(w, x, k + 1, n, curr_sum, remaining - w[k], d, count);
+    // If including next element does not exceed target, continue recursion
+    else if (currentSum + set[index] + set[index + 1] <= targetSum) {
+        findSubsets(currentSum + set[index], index + 1, remainingSum - set[index]);
+    }
+
+    // If it's still possible to find a valid subset, try without current element
+    if ((currentSum + remainingSum - set[index] >= targetSum) && 
+        (currentSum + set[index + 1] <= targetSum)) {
+        include[index] = 0;  // Exclude current element
+        findSubsets(currentSum, index + 1, remainingSum - set[index]);
     }
 }
 
 int main() {
-    int n, d, sum = 0;
-    
-    // Step 1: Read total number of elements
-    printf("Enter the number of elements: ");
+    int i, n, totalSum = 0;
+
+    printf("\nEnter the number of elements in the set: ");
     scanf("%d", &n);
 
-    int w[n];  // w[] stores the actual input elements (weights)
-    int x[n];  // x[] is a helper array to track whether each element is included (1) or not (0)
-
-    // Step 2: Input the elements in ascending order (as required by pruning logic)
-    printf("Enter the elements in ascending order:\n");
-    for (int i = 0; i < n; i++) {
-        scanf("%d", &w[i]);
-        sum += w[i];  // Calculate total sum to help prune unnecessary calls
+    printf("\nEnter the elements in increasing order: ");
+    for (i = 1; i <= n; i++) {
+        scanf("%d", &set[i]);
     }
 
-    // Step 3: Input the desired target sum
-    printf("Enter the target sum: ");
-    scanf("%d", &d);
+    printf("\nEnter the target subset sum: ");
+    scanf("%d", &targetSum);
 
-    // Step 4: Check if it's even possible to form the sum
-    if (sum < d) {
-        printf("No solution: total sum less than required.\n");
-        return 0;
+    // Calculate total sum of the input set
+    for (i = 1; i <= n; i++) {
+        totalSum += set[i];
     }
 
-    int count = 0;  // This keeps track of how many subsets were found
-    // Start recursion from index 0, current sum = 0, remaining sum = total sum
-    subsetSum(w, x, 0, n, 0, sum, d, &count);
-
-    if (count == 0)
-        printf("No solution found.\n");
+    // Check if it's even possible to form a subset with the target sum
+    if (totalSum < targetSum || set[1] > targetSum) {
+        printf("\nNo subset possible");
+    } else {
+        findSubsets(0, 1, totalSum);
+    }
 
     return 0;
 }
